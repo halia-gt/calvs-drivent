@@ -20,6 +20,10 @@ async function getBooking(userId: number) {
   await checkBooking(userId);
 
   const result = await bookingRepository.findBooking(userId);
+  if (!result) {
+    throw notFoundError();
+  }
+
   return result;
 }
 
