@@ -39,11 +39,13 @@ async function postBooking(userId: number, roomId: number) {
 
   const userBooking = await bookingRepository.findBookingByUserId(userId);
   if (userBooking) {
+    console.log(userBooking);
     throw forbiddenError();
   }
 
   const bookings = await bookingRepository.findBookingsByRoomId(roomId);
   if (bookings.length === room.capacity) {
+    console.log("flag 2");
     throw forbiddenError();
   }
 
