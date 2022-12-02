@@ -5,7 +5,7 @@ import bookingRepository from "@/repositories/booking-repository";
 import hotelRepository from "@/repositories/hotel-repository";
 import { forbiddenError } from "@/errors/forbidden-error";
 
-async function checkBooking(userId: number) {
+async function checkEnrollmentAndTicket(userId: number) {
   const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
   if (!enrollment) {
     throw notFoundError();
@@ -18,8 +18,20 @@ async function checkBooking(userId: number) {
   }
 }
 
+async function checkBooking(roomId: number) {
+  const room = await hotelRepository.findRoomsByRoomId(roomId);
+  if (!room) {
+    throw notFoundError();
+  }
+
+  const bookings = await bookingRepository.findBookingsByRoomId(roomId);
+  if (bookings.length === room.capacity) {
+    throw forbiddenError();
+  }
+}
+
 async function getBooking(userId: number) {
-  await checkBooking(userId);
+  await checkEnrollmentAndTicket(userId);
 
   const result = await bookingRepository.findBookingByUserId(userId);
   if (!result) {
@@ -30,22 +42,11 @@ async function getBooking(userId: number) {
 }
 
 async function postBooking(userId: number, roomId: number) {
-  await checkBooking(userId);
-
-  const room = await hotelRepository.findRoomsByRoomId(roomId);
-  if (!room) {
-    throw notFoundError();
-  }
+  await checkEnrollmentAndTicket(userId);
+  await checkBooking(roomId);
 
   const userBooking = await bookingRepository.findBookingByUserId(userId);
   if (userBooking) {
-    console.log(userBooking);
-    throw forbiddenError();
-  }
-
-  const bookings = await bookingRepository.findBookingsByRoomId(roomId);
-  if (bookings.length === room.capacity) {
-    console.log("flag 2");
     throw forbiddenError();
   }
 
@@ -54,9 +55,23 @@ async function postBooking(userId: number, roomId: number) {
   return result;
 }
 
+async function updateBooking(userId: number, bookingId: number, roomId: number) {
+  const userBooking = await bookingRepository.findBookingByUserId(userId);
+  if (userBooking.id !== bookingId) {
+    throw forbiddenError();
+  }
+
+  await checkBooking(roomId);
+
+  const result = await bookingRepository.updateBooking(bookingId, roomId);
+
+  return result;
+}
+
 const bookingService = {
   getBooking,
   postBooking,
+  updateBooking,
 };
 
 export default bookingService;
