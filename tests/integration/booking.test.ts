@@ -135,23 +135,23 @@ describe("POST /booking", () => {
   });
 
   describe("when token is valid", () => {
-    it("should respond with status 404 when body is not given", async () => {
+    it("should respond with status 403 when body is not given", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       
       const response = await server.post("/booking").set("Authorization", `Bearer ${token}`);
 
-      expect(response.status).toEqual(httpStatus.NOT_FOUND);
+      expect(response.status).toEqual(httpStatus.FORBIDDEN);
     });
 
-    it("should respond with status 404 when body is invalid", async () => {
+    it("should respond with status 403 when body is invalid", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const invalidBody = { [faker.lorem.word()]: faker.lorem.word() };
       
       const response = await server.post("/booking").set("Authorization", `Bearer ${token}`).send(invalidBody);
 
-      expect(response.status).toEqual(httpStatus.NOT_FOUND);
+      expect(response.status).toEqual(httpStatus.FORBIDDEN);
     });
 
     it("should respond with status 404 when user doesnt have an enrollment yet", async () => {
@@ -188,7 +188,7 @@ describe("POST /booking", () => {
       expect(response.status).toEqual(httpStatus.NOT_FOUND);
     });
 
-    it("should respond with status 403 when user has a booking", async () => {
+    it("should respond with status 403 when user has a previous booking", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const enrollment = await createEnrollmentWithAddress(user);
@@ -222,7 +222,17 @@ describe("POST /booking", () => {
       expect(response.status).toEqual(httpStatus.FORBIDDEN);
     });
 
-    it("should respond with status 200 with booking id", async () => {
+    it("should respond with status 403 when invalid roomId is given", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const body = { roomId: 0 };
+      
+      const response = await server.post("/booking").set("Authorization", `Bearer ${token}`).send(body);
+
+      expect(response.status).toEqual(httpStatus.FORBIDDEN);
+    });
+
+    it("should respond with status 200 with booking id when valid roomId", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const enrollment = await createEnrollmentWithAddress(user);
@@ -275,26 +285,26 @@ describe("PUT /booking/:bookingId", () => {
   });
 
   describe("when token is valid", () => {
-    it("should respond with status 404 when body is not given", async () => {
+    it("should respond with status 403 when body is not given", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       
       const response = await server.put("/booking/1").set("Authorization", `Bearer ${token}`);
 
-      expect(response.status).toEqual(httpStatus.NOT_FOUND);
+      expect(response.status).toEqual(httpStatus.FORBIDDEN);
     });
 
-    it("should respond with status 404 when body is invalid", async () => {
+    it("should respond with status 403 when body is invalid", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const invalidBody = { [faker.lorem.word()]: faker.lorem.word() };
       
       const response = await server.put("/booking/1").set("Authorization", `Bearer ${token}`).send(invalidBody);
 
-      expect(response.status).toEqual(httpStatus.NOT_FOUND);
+      expect(response.status).toEqual(httpStatus.FORBIDDEN);
     });
 
-    it("should respond with status 404 when param is invalid", async () => {
+    it("should respond with status 403 when param is invalid", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const invalidParam = faker.lorem.word();
@@ -302,7 +312,7 @@ describe("PUT /booking/:bookingId", () => {
       
       const response = await server.put(`/booking/${invalidParam}`).set("Authorization", `Bearer ${token}`).send(body);
 
-      expect(response.status).toEqual(httpStatus.NOT_FOUND);
+      expect(response.status).toEqual(httpStatus.FORBIDDEN);
     });
 
     it("should respond with status 404 when user doesnt have a booking yet", async () => {
@@ -336,7 +346,7 @@ describe("PUT /booking/:bookingId", () => {
       const hotel = await createHotel();
       const room = await createRoomWithHotelId(hotel.id);
       const booking = await createBookingWithRoomId(user.id, room.id);
-      const body = { roomId: 0 };
+      const body = { roomId: room.id + 1 };
 
       const response = await server.put(`/booking/${booking.id}`).set("Authorization", `Bearer ${token}`).send(body);
 
@@ -358,7 +368,27 @@ describe("PUT /booking/:bookingId", () => {
       expect(response.status).toEqual(httpStatus.FORBIDDEN);
     });
 
-    it("should respond with status 200 with booking id", async () => {
+    it("should respond with status 403 when invalid roomId is given", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const body = { roomId: 0 };
+      
+      const response = await server.put("/booking/1").set("Authorization", `Bearer ${token}`).send(body);
+
+      expect(response.status).toEqual(httpStatus.FORBIDDEN);
+    });
+
+    it("should respond with status 403 when invalid bookingId is given", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const body = { roomId: 1 };
+      
+      const response = await server.put("/booking/0").set("Authorization", `Bearer ${token}`).send(body);
+
+      expect(response.status).toEqual(httpStatus.FORBIDDEN);
+    });
+
+    it("should respond with status 200 with booking id when valid roomId and bookingId", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const hotel = await createHotel();

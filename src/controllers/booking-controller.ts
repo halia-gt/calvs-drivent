@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthenticatedRequest } from "@/middlewares";
 import httpStatus from "http-status";
 import bookingService from "@/services/booking-service";
-import { notFoundError } from "@/errors";
+import { forbiddenError } from "@/errors";
 
 export async function getBooking(req: AuthenticatedRequest, res: Response) {
   const { userId } = req;
@@ -17,14 +17,15 @@ export async function getBooking(req: AuthenticatedRequest, res: Response) {
 
 export async function postBooking(req: AuthenticatedRequest, res: Response) {
   const { userId } = req;
-  const { roomId } = req.body;
+  const { roomId: stringId } = req.body;
+  const roomId = Number(stringId);
 
   try {
-    if (!roomId || isNaN(Number(roomId))) {
-      throw notFoundError();
+    if (!roomId || isNaN(roomId) || roomId <= 0) {
+      throw forbiddenError();
     }
 
-    const booking = await bookingService.postBooking(Number(userId), Number(roomId));
+    const booking = await bookingService.postBooking(Number(userId), roomId);
     return res.status(httpStatus.OK).send({ id: booking.id });
   } catch (error) {
     if (error.name === "NotFoundError") {
@@ -37,12 +38,14 @@ export async function postBooking(req: AuthenticatedRequest, res: Response) {
 
 export async function updateBooking(req: AuthenticatedRequest, res: Response) {
   const { userId } = req;
-  const { roomId } = req.body;
-  const { bookingId } = req.params;
+  const { roomId: stringRoomId } = req.body;
+  const { bookingId: stringBookingId } = req.params;
+  const roomId = Number(stringRoomId);
+  const bookingId = Number(stringBookingId);
 
   try {
-    if (!bookingId || isNaN(Number(bookingId)) || !roomId || isNaN(Number(roomId))) {
-      throw notFoundError();
+    if (!bookingId || isNaN(bookingId) || !roomId || isNaN(roomId) || roomId <= 0 || bookingId <= 0) {
+      throw forbiddenError();
     }
 
     const booking = await bookingService.updateBooking(Number(userId), Number(bookingId), Number(roomId));
