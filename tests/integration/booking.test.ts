@@ -315,7 +315,7 @@ describe("PUT /booking/:bookingId", () => {
       expect(response.status).toEqual(httpStatus.FORBIDDEN);
     });
 
-    it("should respond with status 404 when user doesnt have a booking yet", async () => {
+    it("should respond with status 404 when bookingId is valid, but doesnt exist", async () => {
       const user = await createUser();
       const token = await generateValidToken(user);
       const body = { roomId: 3 };
