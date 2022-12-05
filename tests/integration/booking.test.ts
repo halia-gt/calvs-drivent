@@ -254,7 +254,7 @@ describe("POST /booking", () => {
 
       expect(response.status).toEqual(httpStatus.OK);
       expect(response.body).toEqual({
-        id: booking.id,
+        bookingId: booking.id,
       });
     });
   });
@@ -407,6 +407,9 @@ describe("PUT /booking/:bookingId", () => {
 
       expect(response.status).toEqual(httpStatus.OK);
       expect(booking.roomId).toEqual(newRoom.id);
+      expect(response.body).toEqual({
+        bookingId: booking.id,
+      });
     });
   });
 });

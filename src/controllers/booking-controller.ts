@@ -4,6 +4,14 @@ import httpStatus from "http-status";
 import bookingService from "@/services/booking-service";
 import { forbiddenError } from "@/errors";
 
+function verifyParameters(param: number): boolean {
+  if (!param || isNaN(param) || param <= 0) {
+    return true;
+  }
+
+  return false;
+}
+
 export async function getBooking(req: AuthenticatedRequest, res: Response) {
   const { userId } = req;
 
@@ -21,12 +29,12 @@ export async function postBooking(req: AuthenticatedRequest, res: Response) {
   const roomId = Number(stringId);
 
   try {
-    if (!roomId || isNaN(roomId) || roomId <= 0) {
+    if (verifyParameters(roomId)) {
       throw forbiddenError();
     }
 
     const booking = await bookingService.postBooking(Number(userId), roomId);
-    return res.status(httpStatus.OK).send({ id: booking.id });
+    return res.status(httpStatus.OK).send({ bookingId: booking.id });
   } catch (error) {
     if (error.name === "NotFoundError") {
       return res.sendStatus(httpStatus.NOT_FOUND);
@@ -44,12 +52,12 @@ export async function updateBooking(req: AuthenticatedRequest, res: Response) {
   const bookingId = Number(stringBookingId);
 
   try {
-    if (!bookingId || isNaN(bookingId) || !roomId || isNaN(roomId) || roomId <= 0 || bookingId <= 0) {
+    if (verifyParameters(roomId) || verifyParameters(bookingId)) {
       throw forbiddenError();
     }
 
     const booking = await bookingService.updateBooking(Number(userId), Number(bookingId), Number(roomId));
-    return res.status(httpStatus.OK).send({ id: booking.id });
+    return res.status(httpStatus.OK).send({ bookingId: booking.id });
   } catch (error) {
     if (error.name === "NotFoundError") {
       return res.sendStatus(httpStatus.NOT_FOUND);
